@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANOON Pipeline — IT Sales CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script>if(!window.Vue)document.write('<scr'+'ipt src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"><\/scr'+'ipt>');</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>if(!window.supabase)document.write('<scr'+'ipt src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"><\/scr'+'ipt>');</script>
+<style>
+  :root{
+    --bg:#F5F2EA; --ink:#1A1812; --paper:#FFFDF7; --muted:#6E685A; --faint:#A9A28C;
+    --line:#C9C2AD; --line-soft:#E3DECF; --fill:#EDE8DB;
+    --accent:#D64A17; --accent-dark:#A83A11; --cream:#FFF9EE; --gold:#F0B429;
+    --green:#2E7D4F; --red:#C13B45; --blue:#2B5FB8;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Archivo",system-ui,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}a:hover{color:var(--accent-dark);text-decoration:underline}
+  ::selection{background:var(--accent);color:var(--cream)}
+  button{font:inherit}
+  @keyframes ovIn{from{opacity:0}to{opacity:1}}
+  @keyframes mdIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .mono{font-family:var(--mono)}
+  .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  header.top{position:sticky;top:0;z-index:50;background:rgba(245,242,234,.92);backdrop-filter:blur(10px);border-bottom:2px solid var(--ink)}
+  .top-in{max-width:1360px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .logo{width:40px;height:40px;background:var(--accent);color:var(--cream);display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.05em}
+  .sync-chip{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px dashed var(--faint);background:none;padding:6px 14px;display:inline-flex;align-items:center;gap:8px;border-radius:999px}
+  .dot{width:7px;height:7px;border-radius:50%;animation:blink 2.4s infinite}
+
+  .btn{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;background:none;border:1px solid var(--ink);color:var(--ink);cursor:pointer;transition:all .15s ease}
+  .btn:hover{background:var(--ink);color:var(--bg)}
+  .btn-accent{font-weight:700;padding:10px 18px;background:var(--accent);border:1px solid var(--accent);color:var(--cream);box-shadow:3px 3px 0 var(--ink)}
+  .btn-accent:hover{background:var(--accent);color:var(--cream);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .btn-accent:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+  .btn-danger{font-weight:700;padding:10px 18px;background:var(--red);border:1px solid var(--red);color:var(--cream);box-shadow:3px 3px 0 var(--ink)}
+  .btn-danger:hover{background:var(--red);color:var(--cream);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+  .icon-btn{width:28px;height:28px;border:1px solid var(--line);background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:12px;transition:all .15s ease;padding:0}
+  .icon-btn.edit:hover{color:var(--accent);border-color:var(--accent)}
+  .icon-btn.del:hover{color:var(--red);border-color:var(--red)}
+
+  main{max-width:1360px;margin:0 auto;padding:0 24px 64px}
+  h1.hero{margin:0;font-size:clamp(30px,4.5vw,52px);font-weight:900;letter-spacing:-.02em;line-height:1.02;text-transform:uppercase}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));grid-auto-rows:1fr;margin-top:24px;gap:12px}
+  .kpi{background:var(--paper);border:2px solid var(--ink);padding:22px 20px}
+  .kpi.dark{background:var(--ink);color:var(--bg)}
+  .kpi-label{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .kpi.dark .kpi-label{color:var(--faint)}
+  .kpi-val{font-family:var(--mono);font-size:30px;font-weight:700;margin-top:8px;font-variant-numeric:tabular-nums}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .kpi.dark .kpi-sub{color:var(--faint)}
+
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;margin-top:24px}
+  .panel{border:2px solid var(--ink);background:var(--paper);padding:22px 20px}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .panel-title{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .panel-hint{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.1em}
+
+  .obar{display:grid;grid-template-columns:84px 1fr 92px;align-items:center;gap:10px;background:none;border:none;padding:0;cursor:pointer;text-align:left;width:100%}
+  .track{display:block;height:18px;background:var(--fill);position:relative}
+  .track .fillbar{position:absolute;top:0;bottom:0;left:0;transition:width .4s cubic-bezier(.22,.61,.36,1)}
+  .track-sm{height:8px;background:var(--fill);position:relative}
+  .track-sm .fillbar{position:absolute;top:0;bottom:0;left:0;background:var(--ink);transition:width .4s cubic-bezier(.22,.61,.36,1)}
+
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;padding:7px 16px;border:1px solid var(--faint);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s ease;font-weight:400}
+  .chip:hover{border-color:var(--accent)}
+  .chip.on{background:var(--ink);color:var(--gold);border-color:var(--ink);font-weight:700}
+
+  select.ctl,input.ctl{font:inherit;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--ink);padding:9px 12px}
+  select.ctl:focus,input.ctl:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+  .tbl-wrap{border:2px solid var(--ink);background:var(--paper);overflow:auto;margin-top:24px}
+  table{width:100%;border-collapse:collapse;min-width:960px}
+  th{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--bg);background:var(--ink);text-align:left;padding:12px 14px;position:sticky;top:0;z-index:1}
+  th.num{text-align:right}
+  td{padding:11px 14px}
+  tr.row{border-bottom:1px solid var(--line-soft);transition:background .15s ease}
+  tr.row:hover{background:#FBF7EC}
+  .grp td{background:var(--fill);border-top:2px solid var(--ink);border-bottom:1px solid var(--line);padding:9px 14px}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:3px 9px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .status{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;padding:3px 10px;white-space:nowrap}
+
+  footer.foot{border-top:2px solid var(--ink);padding:20px 24px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .foot-in{max-width:1360px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+  .overlay{position:fixed;inset:0;background:rgba(26,24,18,.55);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;padding:16px;animation:ovIn .18s ease}
+  .modal{background:var(--paper);border:2px solid var(--ink);box-shadow:8px 8px 0 rgba(26,24,18,.9);width:min(580px,100%);max-height:88vh;overflow:auto;padding:28px;animation:mdIn .2s cubic-bezier(.22,.61,.36,1)}
+  .modal.sm{width:min(430px,100%)}
+  .modal-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+  .modal h3{margin:10px 0 20px;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.02em}
+  .modal.sm h3{margin:10px 0 8px;font-size:18px}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field input,.field select{font:inherit;font-size:13px;background:#FFF;border:1px solid var(--ink);padding:9px 12px}
+  .field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--gold);border:1px solid var(--gold);font-family:var(--mono);font-size:12px;letter-spacing:.08em;padding:11px 20px;z-index:200;pointer-events:none;animation:toastIn .2s cubic-bezier(.22,.61,.36,1)}
+
+  #boot-error{display:none;max-width:640px;margin:80px auto;padding:28px;border:2px solid var(--ink);background:var(--paper);font-family:var(--mono);font-size:13px}
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+
+  <header class="top">
+    <div class="top-in">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div class="logo">AP</div>
+        <div>
+          <div style="font-weight:900;font-size:17px;letter-spacing:.06em;text-transform:uppercase">Anoon Pipeline</div>
+          <div class="mono" style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)">IT Sales CRM · Live Shared Database</div>
+        </div>
+      </div>
+      <div class="sync-chip" :title="syncTitle">
+        <span class="dot" :style="{background:syncColor}"></span>{{ syncLabel }}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" @click="askReset">Reset</button>
+        <button class="btn" @click="exportCsv">Export CSV</button>
+        <button class="btn btn-accent" @click="openAdd">+ Add Opportunity</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section style="padding:40px 0 8px">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <h1 class="hero">Consolidated<br>Sales Pipeline</h1>
+        <div class="mono" style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding-bottom:6px">01 / Overview — reconciled collaborative database</div>
+      </div>
+    </section>
+
+    <!-- KPIs -->
+    <section class="kpis">
+      <div class="kpi dark">
+        <div class="kpi-label">Total Pipeline</div>
+        <div class="kpi-val" style="color:var(--gold)">{{ fmt(kpi.total,0) }}</div>
+        <div class="kpi-sub">Filtered sales volume</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Opportunities</div>
+        <div class="kpi-val">{{ kpi.count }}</div>
+        <div class="kpi-sub">Records in view</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Top Owner</div>
+        <div class="kpi-val" style="color:var(--accent)">{{ kpi.topOwner }}</div>
+        <div class="kpi-sub">{{ kpi.topOwnerHint }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Avg Deal Size</div>
+        <div class="kpi-val">{{ kpi.avg }}</div>
+        <div class="kpi-sub">Priced deals only</div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Volume by Owner</div>
+          <div class="panel-hint">USD · FILTERED</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px">
+          <button v-for="b in ownerBars" :key="b.name" class="obar" title="Filter by owner" @click="toggleOwner(b.name)">
+            <span class="mono" :style="{fontSize:'11px',fontWeight:b.fw,letterSpacing:'.06em',textTransform:'uppercase',color:b.labelColor,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}">{{ b.name }}</span>
+            <span class="track"><span class="fillbar" :style="{width:b.pct+'%',background:b.barColor}"></span></span>
+            <span class="mono" style="font-size:11px;font-variant-numeric:tabular-nums;text-align:right;color:var(--ink)">{{ b.amt }}</span>
+          </button>
+        </div>
+        <div class="mono" style="font-size:10px;color:var(--muted);margin-top:14px;letter-spacing:.06em">CLICK A BAR TO FILTER THE TABLE</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Volume by Category</div>
+          <div class="panel-hint">SHARE OF TOTAL</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:18px">
+          <div v-for="b in catBars" :key="b.name" style="display:grid;grid-template-columns:1fr 92px;align-items:center;gap:10px">
+            <div>
+              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:4px">
+                <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.name }}</span>
+                <span class="mono" style="font-size:10px;color:var(--muted)">{{ b.share }}</span>
+              </div>
+              <div class="track-sm"><div class="fillbar" :style="{width:b.pct+'%'}"></div></div>
+            </div>
+            <div class="mono" style="font-size:11px;font-variant-numeric:tabular-nums;text-align:right">{{ b.amt }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section style="margin-top:40px">
+      <div class="mono" style="display:flex;align-items:center;gap:14px;font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">
+        <span style="color:var(--faint)">02 /</span> Filters
+        <span style="flex:1;height:1px;background:var(--line)"></span>
+        <span style="color:var(--muted);letter-spacing:.1em">SHOWING {{ filtered.length }} OF {{ rows.length }}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+        <button class="chip" :class="{on:fOwner===''}" @click="fOwner=''">ALL OWNERS</button>
+        <button v-for="o in OWNERS" :key="o" class="chip" :class="{on:fOwner===o}" @click="toggleOwner(o)">{{ o.toUpperCase() }}</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:16px">
+        <div class="field">
+          <label class="lbl">Product Category</label>
+          <select class="ctl" v-model="fCls" style="min-width:190px">
+            <option value="">All Products</option>
+            <option v-for="c in CLASSES" :key="c">{{ c }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Status</label>
+          <select class="ctl" v-model="fStatus" style="min-width:150px">
+            <option value="">All Statuses</option>
+            <option>In Progress</option><option>Closed Won</option><option>Closed Lost</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Quarter</label>
+          <select class="ctl" v-model="fQuarter" style="min-width:160px">
+            <option value="">All Quarters</option>
+            <option>First Quarter</option><option>Second Quarter</option><option>Third Quarter</option><option>Fourth Quarter</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:220px">
+          <label class="lbl">Search</label>
+          <input class="ctl" type="text" v-model="fSearch" placeholder="Customer, product, note…" style="width:100%">
+        </div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Opportunity</th>
+              <th>Category</th>
+              <th>Owner</th>
+              <th class="num">Deal Size (USD)</th>
+              <th>Status</th>
+              <th>Note</th>
+              <th style="width:84px">Action</th>
+            </tr>
+          </thead>
+          <tbody v-for="g in groups" :key="g.owner">
+            <tr v-if="g.hasHeader" class="grp">
+              <td colspan="8">
+                <div class="mono" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">
+                  <span style="color:var(--accent)">▸ {{ g.owner }} <span style="color:var(--muted);font-weight:400">— {{ g.count }} deals</span></span>
+                  <span style="font-variant-numeric:tabular-nums">{{ g.subtotal }}</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-for="r in g.deals" :key="r.id" class="row">
+              <td class="mono" style="font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums">{{ r.idx }}</td>
+              <td>
+                <div style="font-weight:700;font-size:13px">{{ r.c }}</div>
+                <div style="font-size:12px;color:var(--muted)">{{ r.d }}</div>
+              </td>
+              <td><span class="tag">{{ r.cls }}</span></td>
+              <td class="mono" style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">{{ r.o }}</td>
+              <td class="mono" style="text-align:right;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums" :style="{color:r.v>0?'var(--ink)':'var(--faint)'}">{{ r.v>0 ? fmt(r.v) : '—' }}</td>
+              <td><span class="status" :style="statusStyle(r.s)">{{ r.s }}</span></td>
+              <td style="font-size:12px;color:var(--muted);font-style:italic">{{ r.n }}</td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <button class="icon-btn edit" title="Edit" @click="openEdit(r.id)">✎</button>
+                  <button class="icon-btn del" title="Delete" @click="askDelete(r.id)">✕</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody>
+            <tr v-if="filtered.length===0">
+              <td colspan="8" class="mono" style="text-align:center;padding:56px;color:var(--faint);font-size:12px;letter-spacing:.14em;text-transform:uppercase">No opportunities match the current filters</td>
+            </tr>
+            <tr v-else>
+              <td colspan="4" class="mono" style="background:var(--ink);color:var(--bg);padding:16px 14px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Grand Total — Filtered Volume</td>
+              <td class="mono" style="background:var(--ink);color:var(--gold);padding:16px 14px;text-align:right;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums">{{ fmt(kpi.total) }}</td>
+              <td colspan="3" style="background:var(--ink)"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-in">
+      <span>Anoon Pipeline · Consolidated Database</span>
+      <span>Live shared data — syncs to all open browsers via Supabase</span>
+    </div>
+  </footer>
+
+  <!-- Form modal -->
+  <div v-if="showForm" class="overlay" @click.self="showForm=false">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-kicker" style="color:var(--accent)">Form / Opportunity</div>
+      <h3>{{ editingId ? 'Edit — ' + form.c : 'New Opportunity' }}</h3>
+      <div class="fgrid">
+        <div class="field">
+          <label class="lbl">Customer Name <span style="color:var(--red)">*</span></label>
+          <input type="text" v-model="form.c">
+        </div>
+        <div class="field">
+          <label class="lbl">Description <span style="color:var(--red)">*</span></label>
+          <input type="text" v-model="form.d">
+        </div>
+        <div class="field">
+          <label class="lbl">Product Class</label>
+          <select v-model="form.cls"><option v-for="c in CLASSES" :key="c">{{ c }}</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl">Owner</label>
+          <select v-model="form.o"><option v-for="o in OWNERS" :key="o">{{ o }}</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl">Deal Size (USD)</label>
+          <input type="number" min="0" step="0.01" v-model="form.v">
+        </div>
+        <div class="field">
+          <label class="lbl">Quarter</label>
+          <select v-model="form.q"><option>First Quarter</option><option>Second Quarter</option><option>Third Quarter</option><option>Fourth Quarter</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl">Status</label>
+          <select v-model="form.s"><option>In Progress</option><option>Closed Won</option><option>Closed Lost</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl">Comment / Note</label>
+          <input type="text" v-model="form.n">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
+        <button class="btn" @click="showForm=false">Cancel</button>
+        <button class="btn btn-accent" @click="saveForm">Save Opportunity</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div v-if="showConfirm" class="overlay" @click.self="showConfirm=false">
+    <div class="modal sm" role="dialog" aria-modal="true">
+      <div class="modal-kicker" style="color:var(--red)">Confirm / Action</div>
+      <h3>Are you sure?</h3>
+      <p style="margin:0;color:var(--muted);font-size:13px">{{ confirmMsg }}</p>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
+        <button class="btn" @click="confirmNo">Cancel</button>
+        <button class="btn btn-danger" @click="confirmYes">Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="toastMsg" class="toast">{{ toastMsg }}</div>
+</div>
+
+<div id="boot-error">
+  <strong>COULD NOT LOAD APP LIBRARIES</strong><br><br>
+  Vue.js or Supabase failed to load from the CDN. Check your internet connection or firewall, then refresh the page.
+</div>
+
+<script>
+/* ============================================================
+   ANOON PIPELINE — standalone single-file app
+   Backend: Supabase (always-live shared data, no room codes)
+   Same architecture as Connect IQ: one row in `plans` table,
+   Realtime WebSocket push + 5-second polling fallback.
+   ============================================================ */
+
+const SUPABASE_URL = 'https://ujpcntxrmfstmcgalhre.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqcGNudHhybWZzdG1jZ2FsaHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzgyNDUsImV4cCI6MjA5ODQxNDI0NX0.cKsfkIZCiJ0oxMtpZ_iP283s1pbGRHBaQdo6mRk_KgA';
+const TABLE   = 'plans';           // reuses the existing table (Realtime already ON)
+const PLAN_ID = 'anoon-pipeline';  // this app's own row — does not touch Connect IQ's 'main'
+const CACHE_KEY = 'anoon-pipeline-cache';
+const CLIENT_ID = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+const BASELINE = [
+  {c:"Misr Capital", d:"Forti 400F", cls:"Cybersecurity / Firewalls", o:"Kamel", q:"Third Quarter", v:45226.00, s:"In Progress", n:""},
+  {c:"Misr Capital", d:"Sophos 3300", cls:"Sophos Security", o:"Kamel", q:"Third Quarter", v:21551.70, s:"In Progress", n:""},
+  {c:"Ezab", d:"Adobe", cls:"Others / Mixed Solutions", o:"Kamel", q:"Third Quarter", v:5055.00, s:"In Progress", n:""},
+  {c:"Memphis University", d:"Kaspersky", cls:"Kaspersky / Endpoint", o:"Kamel", q:"Third Quarter", v:25400.00, s:"In Progress", n:""},
+  {c:"Memphis University", d:"3CX", cls:"3CX Unified Comm", o:"Kamel", q:"Third Quarter", v:10550.00, s:"In Progress", n:""},
+  {c:"Daninap", d:"Lenovo", cls:"Dell / Servers / Hardware", o:"Kamel", q:"Third Quarter", v:1626.00, s:"In Progress", n:""},
+  {c:"HMR Pharmacies", d:"Forti Renewal 60F", cls:"Cybersecurity / Firewalls", o:"Kamel", q:"Third Quarter", v:1200.00, s:"In Progress", n:""},
+  {c:"Sharabati", d:"Forti Cloud", cls:"Cybersecurity / Firewalls", o:"Kamel", q:"Third Quarter", v:17385.00, s:"In Progress", n:""},
+  {c:"Sharabati", d:"Kaspersky", cls:"Kaspersky / Endpoint", o:"Kamel", q:"Third Quarter", v:20000.00, s:"In Progress", n:""},
+  {c:"Sharabati", d:"Network", cls:"Network / Infrastructure", o:"Kamel", q:"Third Quarter", v:12000.00, s:"In Progress", n:""},
+  {c:"MCS Oil", d:"Forti Rugged", cls:"Cybersecurity / Firewalls", o:"Kamel", q:"Third Quarter", v:11901.00, s:"In Progress", n:""},
+  {c:"Zeta Pharma", d:"Sophos 3300 Xstream", cls:"Sophos Security", o:"EL-Shishi", q:"Third Quarter", v:27836.52, s:"In Progress", n:""},
+  {c:"Zeta Pharma", d:"Microwave", cls:"Network / Infrastructure", o:"EL-Shishi", q:"Third Quarter", v:4400.00, s:"In Progress", n:""},
+  {c:"Security Co.", d:"Fiber", cls:"Network / Infrastructure", o:"EL-Shishi", q:"Third Quarter", v:7260.00, s:"In Progress", n:"Verify customer name"},
+  {c:"Baron Resort", d:"Renewal FortiGate 80F", cls:"Cybersecurity / Firewalls", o:"EL-Shishi", q:"Third Quarter", v:1180.00, s:"In Progress", n:""},
+  {c:"China Fenmax", d:"Dell Latitude 7350", cls:"Dell / Servers / Hardware", o:"EL-Shishi", q:"Third Quarter", v:1956.12, s:"In Progress", n:"Verify customer name"},
+  {c:"Smart Village", d:"FortiGate 600E Renewal", cls:"Cybersecurity / Firewalls", o:"EL-Shishi", q:"Third Quarter", v:9775.00, s:"In Progress", n:""},
+  {c:"Al Basheer School", d:"Cable CAT 6A", cls:"Network / Infrastructure", o:"EL-Shishi", q:"Third Quarter", v:2576.00, s:"In Progress", n:""},
+  {c:"Al Basheer School", d:"HPE Aruba Switch 24 port", cls:"Network / Infrastructure", o:"EL-Shishi", q:"Third Quarter", v:6003.00, s:"In Progress", n:""},
+  {c:"Manal", d:"Microsoft", cls:"Microsoft Cloud / Licenses", o:"Nourhan", q:"Third Quarter", v:3735.00, s:"In Progress", n:""},
+  {c:"Al Menior", d:"Sophos", cls:"Sophos Security", o:"Nourhan", q:"Third Quarter", v:3927.00, s:"In Progress", n:""},
+  {c:"Tameer", d:"Sophos", cls:"Sophos Security", o:"Nourhan", q:"Third Quarter", v:640.00, s:"In Progress", n:""},
+  {c:"Fab Global", d:"Sophos", cls:"Sophos Security", o:"Nabil", q:"Third Quarter", v:10250.00, s:"In Progress", n:""},
+  {c:"Midis", d:"Sophos & Microsoft", cls:"Others / Mixed Solutions", o:"Nabil", q:"Third Quarter", v:0, s:"In Progress", n:"Deal size TBD"},
+  {c:"Qandeel", d:"ESET", cls:"Kaspersky / Endpoint", o:"Nabil", q:"Third Quarter", v:2022.00, s:"In Progress", n:""},
+  {c:"Auto Plast", d:"ESET", cls:"Kaspersky / Endpoint", o:"Nabil", q:"Third Quarter", v:1017.45, s:"In Progress", n:""},
+  {c:"Smart Factory", d:"Microsoft - Grand Stream", cls:"Microsoft Cloud / Licenses", o:"Nabil", q:"Third Quarter", v:4060.00, s:"In Progress", n:""},
+  {c:"Bait Elmal", d:"3CX", cls:"3CX Unified Comm", o:"Nabil", q:"Third Quarter", v:550.00, s:"In Progress", n:""},
+  {c:"Delivery Fix", d:"Sophos", cls:"Sophos Security", o:"Nabil", q:"Third Quarter", v:4140.00, s:"In Progress", n:""},
+  {c:"Direct KSA", d:"IPT over Fiber", cls:"Network / Infrastructure", o:"Nabil", q:"Third Quarter", v:11088.40, s:"In Progress", n:""},
+  {c:"Detral", d:"3CX", cls:"3CX Unified Comm", o:"Nabil", q:"Third Quarter", v:550.00, s:"In Progress", n:""},
+  {c:"We", d:"Kaspersky", cls:"Kaspersky / Endpoint", o:"Esam", q:"Third Quarter", v:150000.00, s:"In Progress", n:""},
+  {c:"MAFI", d:"CrowdStrike", cls:"Kaspersky / Endpoint", o:"Esam", q:"Third Quarter", v:20000.00, s:"In Progress", n:""},
+  {c:"Element", d:"Sophos", cls:"Sophos Security", o:"Esam", q:"Third Quarter", v:15000.00, s:"In Progress", n:""},
+];
+
+function startApp(){
+  const { createApp } = Vue;
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  createApp({
+    data(){
+      return {
+        rows: BASELINE.map((r,i)=>({id:i+1, ...r})),
+        nextId: BASELINE.length+1,
+        OWNERS: ["Kamel","EL-Shishi","Nourhan","Nabil","Esam"],
+        CLASSES: ["Cybersecurity / Firewalls","Sophos Security","Kaspersky / Endpoint","3CX Unified Comm","Microsoft Cloud / Licenses","Dell / Servers / Hardware","Network / Infrastructure","Others / Mixed Solutions"],
+        fOwner:"", fCls:"", fStatus:"", fQuarter:"Third Quarter", fSearch:"",
+        showForm:false, showConfirm:false, editingId:null,
+        form:{c:"",d:"",cls:"Cybersecurity / Firewalls",o:"Kamel",v:"",q:"Third Quarter",s:"In Progress",n:""},
+        confirmMsg:"", toastMsg:"",
+        // sync state
+        syncStatus:"connecting",   // connecting | live | saving | offline
+        _lastTs: 0,
+        _suppressSave: false,
+      };
+    },
+    computed:{
+      filtered(){
+        const s = this.fSearch.trim().toLowerCase();
+        return this.rows.filter(r =>
+          (!this.fOwner || r.o===this.fOwner) &&
+          (!this.fCls || r.cls===this.fCls) &&
+          (!this.fStatus || r.s===this.fStatus) &&
+          (!this.fQuarter || r.q===this.fQuarter) &&
+          (!s || [r.c,r.d,r.cls,r.o,r.n].join(" ").toLowerCase().includes(s))
+        );
+      },
+      kpi(){
+        const data = this.filtered;
+        const total = data.reduce((a,r)=>a+r.v,0);
+        const priced = data.filter(r=>r.v>0);
+        const byOwner = {};
+        data.forEach(r=>byOwner[r.o]=(byOwner[r.o]||0)+r.v);
+        const top = Object.entries(byOwner).sort((a,b)=>b[1]-a[1])[0];
+        return {
+          total, count: data.length,
+          avg: priced.length ? this.fmt(total/priced.length,0) : "—",
+          topOwner: top ? top[0] : "—",
+          topOwnerHint: top ? this.fmt(top[1],0)+" in view" : "By volume",
+        };
+      },
+      ownerBars(){
+        const data = this.filtered;
+        const byOwner = {};
+        data.forEach(r=>byOwner[r.o]=(byOwner[r.o]||0)+r.v);
+        const sorted = Object.entries(byOwner).sort((a,b)=>b[1]-a[1]);
+        const topName = sorted.length ? sorted[0][0] : null;
+        const max = sorted.length ? sorted[0][1] : 0;
+        return this.OWNERS.filter(o=>byOwner[o]!==undefined || !this.fOwner).map(o=>{
+          const amt = byOwner[o]||0;
+          const on = this.fOwner===o;
+          return {
+            name:o, amt:this.fmt(amt,0),
+            pct: max ? Math.max(1.5, amt/max*100) : 0,
+            barColor: on ? "#D64A17" : (o===topName ? "#D64A17" : "#1A1812"),
+            labelColor: on ? "#D64A17" : "#1A1812",
+            fw: on || o===topName ? 700 : 500,
+          };
+        });
+      },
+      catBars(){
+        const data = this.filtered;
+        const total = data.reduce((a,r)=>a+r.v,0);
+        const byCat = {};
+        data.forEach(r=>byCat[r.cls]=(byCat[r.cls]||0)+r.v);
+        const max = Math.max(0,...Object.values(byCat));
+        return Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([name,amt])=>({
+          name, amt:this.fmt(amt,0),
+          pct: max ? Math.max(1.5, amt/max*100) : 0,
+          share: total ? (amt/total*100).toFixed(1)+"%" : "0%",
+        }));
+      },
+      groups(){
+        const data = this.filtered;
+        const order = [...this.OWNERS, ...[...new Set(data.map(r=>r.o))].filter(o=>!this.OWNERS.includes(o))];
+        let idx = 0;
+        const groups = order.map(owner=>{
+          const g = data.filter(r=>r.o===owner);
+          if(!g.length) return null;
+          return {
+            owner: owner.toUpperCase(), hasHeader:true, count:g.length,
+            subtotal:this.fmt(g.reduce((a,r)=>a+r.v,0)),
+            deals:g.map(r=>({...r, idx:++idx})),
+          };
+        }).filter(Boolean);
+        return groups;
+      },
+      syncLabel(){
+        return {connecting:"CONNECTING…", live:"LIVE · SYNCED", saving:"SAVING…", offline:"OFFLINE · LOCAL ONLY"}[this.syncStatus];
+      },
+      syncColor(){
+        return {connecting:"#F0B429", live:"#2E7D4F", saving:"#2B5FB8", offline:"#C13B45"}[this.syncStatus];
+      },
+      syncTitle(){
+        return this.syncStatus==="live"
+          ? "Connected to the shared database. Everyone with this link sees the same data."
+          : this.syncStatus==="offline"
+            ? "Could not reach the shared database. Changes are saved on this device only and will not sync."
+            : "";
+      },
+    },
+    methods:{
+      fmt(n, dec=2){ return "$ " + n.toLocaleString("en-US",{minimumFractionDigits:dec, maximumFractionDigits:dec}); },
+      statusStyle(s){
+        if(s==="Closed Won")  return {background:"rgba(46,125,79,.14)",  color:"#2E7D4F"};
+        if(s==="Closed Lost") return {background:"rgba(193,59,69,.12)",  color:"#C13B45"};
+        return {background:"rgba(43,95,184,.10)", color:"#2B5FB8"};
+      },
+      toast(msg){
+        clearTimeout(this._toastTimer);
+        this.toastMsg = msg;
+        this._toastTimer = setTimeout(()=>this.toastMsg="", 2200);
+      },
+      toggleOwner(o){ this.fOwner = this.fOwner===o ? "" : o; },
+      openAdd(){
+        this.editingId = null;
+        this.form = {c:"",d:"",cls:"Cybersecurity / Firewalls",o:"Kamel",v:"",q:"Third Quarter",s:"In Progress",n:""};
+        this.showForm = true;
+      },
+      openEdit(id){
+        const r = this.rows.find(x=>x.id===id);
+        if(!r) return;
+        this.editingId = id;
+        this.form = {c:r.c,d:r.d,cls:r.cls,o:r.o,v:r.v||"",q:r.q,s:r.s,n:r.n};
+        this.showForm = true;
+      },
+      saveForm(){
+        const f = this.form;
+        const c = f.c.trim(), d = f.d.trim();
+        if(!c || !d){ this.toast("CUSTOMER NAME AND DESCRIPTION ARE REQUIRED"); return; }
+        const payload = {c, d, cls:f.cls, o:f.o, q:f.q, v:parseFloat(f.v)||0, s:f.s, n:f.n.trim()};
+        if(this.editingId){
+          this.rows = this.rows.map(r=>r.id===this.editingId ? {...r,...payload} : r);
+          this.toast("OPPORTUNITY UPDATED");
+        } else {
+          this.rows = [...this.rows, {id:this.nextId, ...payload}];
+          this.nextId++;
+          this.toast("OPPORTUNITY ADDED");
+        }
+        this.showForm = false;
+      },
+      askDelete(id){
+        const r = this.rows.find(x=>x.id===id);
+        if(!r) return;
+        this._confirmFn = ()=>{
+          this.rows = this.rows.filter(x=>x.id!==id);
+          this.toast("OPPORTUNITY DELETED");
+        };
+        this.confirmMsg = 'Delete "'+r.c+' — '+r.d+'"? This removes it for everyone using this link.';
+        this.showConfirm = true;
+      },
+      askReset(){
+        this._confirmFn = ()=>{
+          this.rows = BASELINE.map((r,i)=>({id:i+1,...r}));
+          this.nextId = BASELINE.length+1;
+          this.toast("BASELINE DATA RESTORED");
+        };
+        this.confirmMsg = "Reset baseline data? All edits will be replaced by the original audit dataset — for everyone using this link.";
+        this.showConfirm = true;
+      },
+      confirmYes(){ if(this._confirmFn) this._confirmFn(); this._confirmFn=null; this.showConfirm=false; },
+      confirmNo(){ this._confirmFn=null; this.showConfirm=false; },
+      exportCsv(){
+        const data = this.filtered;
+        const head = ["#","Customer Name","Opportunity Description","Product Class","Owner","Quarter","Deal Size (USD)","Status","Comment"];
+        const lines = [head.join(",")];
+        data.forEach((r,i)=>{
+          lines.push([i+1,r.c,r.d,r.cls,r.o,r.q,r.v.toFixed(2),r.s,r.n].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(","));
+        });
+        lines.push('"","GRAND TOTAL","","","","","'+data.reduce((a,r)=>a+r.v,0).toFixed(2)+'","",""');
+        const blob = new Blob(["\uFEFF"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "anoon-pipeline.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.toast("EXPORT DOWNLOADED (CSV — OPENS IN EXCEL)");
+      },
+
+      /* ---------- Supabase sync ---------- */
+      _snapshot(){ return { rows: this.rows, nextId: this.nextId }; },
+      _applySnap(snap){
+        if(!snap || !Array.isArray(snap.rows)) return;
+        this._suppressSave = true;
+        this.rows = snap.rows;
+        this.nextId = snap.nextId || (Math.max(0,...snap.rows.map(r=>r.id))+1);
+        this.$nextTick(()=>{ this._suppressSave = false; });
+      },
+      _cacheLocal(){
+        try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ts:this._lastTs, data:this._snapshot()})); }catch(e){}
+      },
+      async _connect(){
+        // 1. Local cache first so the page is instantly useful
+        try{
+          const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+          if(cached && cached.data) this._applySnap(cached.data);
+        }catch(e){}
+
+        // 2. Fetch the shared row (or seed it on very first run)
+        try{
+          const { data, error } = await sb.from(TABLE).select("ts,data").eq("id", PLAN_ID).maybeSingle();
+          if(error) throw error;
+          if(data && data.data){
+            this._lastTs = data.ts || 0;
+            this._applySnap(data.data);
+            this._cacheLocal();
+          } else {
+            await this._push(); // first visit ever — seed baseline
+          }
+          this.syncStatus = "live";
+        }catch(e){
+          console.error("Supabase load failed:", e);
+          this.syncStatus = "offline";
+        }
+
+        // 3. Realtime push (instant sync between open browsers)
+        try{
+          sb.channel("anoon-pipeline-live")
+            .on("postgres_changes",
+              { event:"*", schema:"public", table:TABLE, filter:"id=eq."+PLAN_ID },
+              payload=>{
+                const row = payload.new;
+                if(!row || !row.data) return;
+                if(row.data._client === CLIENT_ID) return;      // our own write echoed back
+                if((row.ts||0) <= this._lastTs) return;          // stale
+                this._lastTs = row.ts||0;
+                this._applySnap(row.data);
+                this._cacheLocal();
+              })
+            .subscribe();
+        }catch(e){ console.warn("Realtime unavailable, polling only.", e); }
+
+        // 4. Polling fallback every 5s (in case WebSocket is blocked)
+        setInterval(async ()=>{
+          if(this.syncStatus==="offline"){
+            // retry connection
+            try{
+              const { data, error } = await sb.from(TABLE).select("ts").eq("id", PLAN_ID).maybeSingle();
+              if(!error){ this.syncStatus="live"; }
+            }catch(e){ return; }
+          }
+          try{
+            const { data, error } = await sb.from(TABLE).select("ts,data").eq("id", PLAN_ID).maybeSingle();
+            if(error || !data) return;
+            if((data.ts||0) > this._lastTs && data.data && data.data._client !== CLIENT_ID){
+              this._lastTs = data.ts||0;
+              this._applySnap(data.data);
+              this._cacheLocal();
+            }
+          }catch(e){}
+        }, 5000);
+      },
+      async _push(){
+        const ts = Date.now();
+        const body = { ...this._snapshot(), _client: CLIENT_ID };
+        this.syncStatus = this.syncStatus==="offline" ? "offline" : "saving";
+        try{
+          const { error } = await sb.from(TABLE).upsert({ id: PLAN_ID, ts, data: body });
+          if(error) throw error;
+          this._lastTs = ts;
+          this.syncStatus = "live";
+        }catch(e){
+          console.error("Supabase save failed:", e);
+          this.syncStatus = "offline";
+        }
+        this._cacheLocal();
+      },
+      _scheduleSave(){
+        if(this._suppressSave) return;
+        clearTimeout(this._saveTimer);
+        this._saveTimer = setTimeout(()=>this._push(), 600);
+      },
+    },
+    watch:{
+      rows:  { deep:true, handler(){ this._scheduleSave(); } },
+      nextId(){ this._scheduleSave(); },
+    },
+    mounted(){
+      this._esc = e=>{ if(e.key==="Escape"){ this.showForm=false; this.showConfirm=false; } };
+      document.addEventListener("keydown", this._esc);
+      this._connect();
+    },
+    beforeUnmount(){
+      document.removeEventListener("keydown", this._esc);
+      clearTimeout(this._toastTimer);
+      clearTimeout(this._saveTimer);
+    },
+  }).mount("#app");
+}
+
+/* Wait for CDN libraries (same pattern that fixed Connect IQ's loading race) */
+(function waitForLibs(tries){
+  tries = tries || 0;
+  if(window.Vue && window.supabase){ startApp(); return; }
+  if(tries > 200){ // ~20 seconds
+    document.getElementById("app").style.display = "none";
+    document.getElementById("boot-error").style.display = "block";
+    return;
+  }
+  setTimeout(()=>waitForLibs(tries+1), 100);
+})();
+</script>
+</body>
+</html>
