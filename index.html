@@ -210,7 +210,7 @@
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
         <button class="chip" :class="{on:fOwner===''}" @click="fOwner=''">ALL OWNERS</button>
-        <button v-for="o in OWNERS" :key="o" class="chip" :class="{on:fOwner===o}" @click="toggleOwner(o)">{{ o.toUpperCase() }}</button>
+        <button v-for="o in allOwners" :key="o" class="chip" :class="{on:fOwner===o}" @click="toggleOwner(o)">{{ o.toUpperCase() }}</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-top:16px">
         <div class="field">
@@ -327,7 +327,10 @@
         </div>
         <div class="field">
           <label class="lbl">Owner</label>
-          <select v-model="form.o"><option v-for="o in OWNERS" :key="o">{{ o }}</option></select>
+          <input type="text" list="ownersList" v-model="form.o" placeholder="Type any name">
+          <datalist id="ownersList">
+            <option v-for="o in allOwners" :key="o" :value="o"></option>
+          </datalist>
         </div>
         <div class="field">
           <label class="lbl">Deal Size (USD)</label>
@@ -448,6 +451,10 @@ function startApp(){
       };
     },
     computed:{
+      allOwners(){
+        const extra = [...new Set(this.rows.map(r=>r.o).filter(Boolean))].filter(o=>!this.OWNERS.includes(o));
+        return [...this.OWNERS, ...extra.sort((a,b)=>a.localeCompare(b))];
+      },
       filtered(){
         const s = this.fSearch.trim().toLowerCase();
         return this.rows.filter(r =>
@@ -479,7 +486,7 @@ function startApp(){
         const sorted = Object.entries(byOwner).sort((a,b)=>b[1]-a[1]);
         const topName = sorted.length ? sorted[0][0] : null;
         const max = sorted.length ? sorted[0][1] : 0;
-        return this.OWNERS.filter(o=>byOwner[o]!==undefined || !this.fOwner).map(o=>{
+        return this.allOwners.filter(o=>byOwner[o]!==undefined || !this.fOwner).map(o=>{
           const amt = byOwner[o]||0;
           const on = this.fOwner===o;
           return {
@@ -505,7 +512,7 @@ function startApp(){
       },
       groups(){
         const data = this.filtered;
-        const order = [...this.OWNERS, ...[...new Set(data.map(r=>r.o))].filter(o=>!this.OWNERS.includes(o))];
+        const order = [...this.allOwners, ...[...new Set(data.map(r=>r.o))].filter(o=>!this.allOwners.includes(o))];
         let idx = 0;
         const groups = order.map(owner=>{
           const g = data.filter(r=>r.o===owner);
